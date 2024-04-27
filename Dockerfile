@@ -1,8 +1,5 @@
 # Use the custom base image
-FROM lalitbits2023/scalable:base
-
-# Install Python and pip
-RUN apt-get update && apt-get install -y python3-pip
+FROM python:3.8.19
 
 # Set the working directory in the container
 WORKDIR /code
@@ -17,4 +14,4 @@ RUN pip3 install -r requirements.txt
 COPY . .
 
 # Command to run on container start
-CMD [ "python3", "./app.py" ]
+CMD [ "python3", "./code/app.py" ]
