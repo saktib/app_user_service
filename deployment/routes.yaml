@@ -1,0 +1,62 @@
+# ambassador
+---
+apiVersion: getambassador.io/v2
+kind: Filter
+metadata:
+  name: auth-filter
+  namespace: book-namespace
+spec:
+  External:
+    auth_service: "user-service.book-namespace.svc.cluster.local:5000"
+    path_prefix: "/validate"
+    allowed_headers:
+      - "Authorization"
+---
+apiVersion: getambassador.io/v2
+kind: FilterPolicy
+metadata:
+  name: auth-policy
+  namespace: book-namespace
+spec:
+  rules:
+    - host: "*"
+      path: "*"
+      filters:
+        - name: auth-filter
+
+
+---
+
+apiVersion: getambassador.io/v2
+kind: Module
+metadata:
+  name: ambassador
+  namespace: book-namespace
+spec:
+  config: |
+    ---
+    apiVersion: ambassador/v1
+    kind: AuthService
+    name: auth
+    auth_service: http://auth-service
+
+---
+
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: user-login-service-mapping
+  namespace: book-namespace
+spec:
+  prefix: /login
+  service: user-service-service
+---
+
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: user-validate-service-mapping
+  namespace: book-namespace
+spec:
+  prefix: /validate
+  service: user-service-service

@@ -7,7 +7,7 @@ services:
     ports:
       - 8081:5000
     environment:
-      MYSQL_HOST: 'database'
+      MYSQL_HOST: 'scalable_db_server'
       MYSQL_PORT: 3306
       MYSQL_USER: 'user'
       MYSQL_PASSWORD: 'password'
@@ -29,6 +29,7 @@ services:
       - database
 
   database:
+    container_name: scalable_db_server
     image: mysql:8
     restart: always
     environment:
@@ -37,7 +38,7 @@ services:
       MYSQL_PASSWORD: 'password'
       MYSQL_ROOT_PASSWORD: 'password'
     ports:
-      - '3200:3306'
+      - '3306:3306'
     expose:
       - '3306'
       # Where our data will be persisted

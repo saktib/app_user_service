@@ -1,0 +1,266 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: book-db-namespace
+
+# mysql db book_user_db
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-book-user-db
+  namespace: book-db-namespace
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: 'password'
+            - name: MYSQL_USER
+              value: 'user'
+            - name: MYSQL_PASSWORD
+              value: 'password'
+          volumeMounts:
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - mountPath: "/var/lib/mysql"
+              subPath: "mysql"
+              name: mysql-data
+      volumes:
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-data-disk
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: book-db-namespace
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS book_user_db;
+    use book_user_db;
+    CREATE TABLE `user` (`id` int NOT NULL, `username` varchar(80) NOT NULL, `password_hash` varchar(128) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    INSERT INTO `user` (`id`, `username`, `password_hash`) VALUES (1, 'admin', 'admin');
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-data-disk
+  namespace: book-db-namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-book-user-db
+  namespace: book-db-namespace
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: NodePort 
+
+
+
+# mysql db book_db
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-book-db
+  namespace: book-db-namespace
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: 'password'
+            - name: MYSQL_USER
+              value: 'user'
+            - name: MYSQL_PASSWORD
+              value: 'password'
+          volumeMounts:
+            - name: mysql-book-db-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - mountPath: "/var/lib/mysql"
+              subPath: "mysql"
+              name: mysql-book-db-data
+      volumes:
+        - name: mysql-book-db-initdb
+          configMap:
+            name: mysql-book-db-initdb-config
+        - name: mysql-book-db-data
+          persistentVolumeClaim:
+            claimName: mysql-book-db-data-disk
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-book-db-initdb-config
+  namespace: book-db-namespace
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS book_db;
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-book-db-data-disk
+  namespace: book-db-namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-book-db
+  namespace: book-db-namespace
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: NodePort 
+
+
+
+  # mysql db book_cart_db
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-book-cart-db
+  namespace: book-db-namespace
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: 'password'
+            - name: MYSQL_USER
+              value: 'user'
+            - name: MYSQL_PASSWORD
+              value: 'password'
+          volumeMounts:
+            - name: mysql-book-cart-db-initdb
+              mountPath: /docker-entrypoint-initdb.d
+            - mountPath: "/var/lib/mysql"
+              subPath: "mysql"
+              name: mysql-book-cart-db-data
+      volumes:
+        - name: mysql-book-cart-db-initdb
+          configMap:
+            name: mysql-book-cart-db-initdb-config
+        - name: mysql-book-cart-db-data
+          persistentVolumeClaim:
+            claimName: mysql-book-cart-db-data-disk
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-book-cart-db-initdb-config
+  namespace: book-db-namespace
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS book_cart_db;
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-book-cart-db-data-disk
+  namespace: book-db-namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-book-cart-db
+  namespace: book-db-namespace
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: NodePort

@@ -29,18 +29,30 @@ def login():
     password = request.json.get('password', None)
 
     user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password_hash, password):
+    if not user:
         return jsonify({"msg": "Bad username or password"}), 401
+    
+    if password != user.password_hash:
+        return jsonify({'message': 'Password is incorrect'}), 401
+
 
     access_token = create_access_token(identity=user.id)
     return jsonify(access_token=access_token), 200
 
 
-@app.route('/protected', methods=['GET'])
+@app.route('/validate', methods=['GET'])
 @jwt_required()
-def protected():
-    current_user_id = get_jwt_identity()
-    return jsonify(logged_in_as=current_user_id), 200
+def validate():
+    token = request.headers.get('Authorization')
+
+    if not token:
+        return jsonify({'message': 'Missing token'}), 401
+    
+    try:
+        current_user_id = get_jwt_identity()
+        return jsonify(logged_in_as=current_user_id), 200
+    except:
+        return jsonify({'message': 'Invalid token'}), 403
 
 
 if __name__ == '__main__':

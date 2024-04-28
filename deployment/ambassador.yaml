@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: book-namespace
+
+# ambassador
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ambassador
+  namespace: book-namespace
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ambassador
+  namespace: book-namespace
+spec:
+  type: NodePort
+  selector:
+    service: ambassador
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: ambassador-adm
+      port: 8877
+      targetPort: 8877
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ambassador
+  namespace: book-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: ambassador
+  template:
+    metadata:
+      labels:
+        service: ambassador
+    spec:
+      serviceAccountName: ambassador
+      containers:
+        - name: ambassador
+          image: docker.io/datawire/aes:2.3.1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: ambassador-adm
+              containerPort: 8877
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 32Mi
+          livenessProbe:
+            httpGet:
+              path: /ambassador/v0/check_alive
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ambassador/v0/check_ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+
